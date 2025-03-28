@@ -44,6 +44,11 @@
     data <- read.csv("car_data.csv")
     ```
 
+    ```
+    # use car_prices_100K.csv for small dataset
+    data <- read.csv("ar_prices_100K.csv")
+    ```
+
 5. Important Considerations:
     ### Feature Importance: 
     Identify which features are most important for predicting car prices. 
