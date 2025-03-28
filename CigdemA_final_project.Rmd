@@ -1,0 +1,238 @@
+---
+title: "Cigdem_final_project2"
+author: "Cigdem Akdemir"
+date: "2024-08-11"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+```
+
+```{r}
+library(readr)
+car_data <- read_csv("car_prices_100K.csv")
+car_data
+```
+
+```{r}
+summary(car_data)
+```
+
+```{r}
+str(car_data)
+head(car_data)
+```
+
+```{r}
+nrow(car_data)
+ncol(car_data)
+```
+
+```{r}
+# Summary statistics for character variables
+df1 <- dplyr::select_if(car_data, is.character)
+df1
+```
+
+```{r}
+# Summary statistics for numeric variables
+df2 <- dplyr::select_if(car_data, is.numeric)
+df2
+
+
+```
+
+```{r}
+sum(is.na(car_data))
+```
+
+```{r}
+colSums(is.na(car_data))
+```
+
+```{r}
+car_data <- na.omit(car_data)
+car_data
+
+```
+
+```{r}
+nrow(car_data)
+ncol(car_data)
+```
+
+```{r}
+mean_values <- car_data %>%
+  select_if(is.numeric) %>%
+  summarise_all(mean, na.rm = TRUE)
+mean_values
+
+```
+
+```{r}
+ggplot(df2, aes(x=year, y=sellingprice)) + geom_point( color="red") + 
+  labs(title="Selling Price vs Year", x="Year", y="Selling Price")
+
+```
+
+```{r}
+ggplot(car_data, aes(x=odometer, y=sellingprice)) +
+  geom_point(color="blue") +
+  labs(title="Selling Price vs. odometer", x="Kilometer", y="Selling Price")
+  
+```
+
+```{r}
+ggplot(car_data, aes(x=mmr, y=sellingprice)) +
+  geom_point(color="purple") +
+  labs(title="Selling Price vs. MMR", x="MMR", y="Selling Price")
+```
+
+```{r}
+# Visualize First 10 max_price cars
+car_data_max <- car_data %>%
+  group_by(make) %>%
+  summarise(max_price = max(sellingprice, na.rm = TRUE)) %>%
+  arrange(desc(max_price)) %>%
+  head(10)
+car_data_max
+
+
+```
+
+```{r}
+ggplot(car_data_max, aes(x=reorder(make, max_price), y=max_price)) +
+  geom_bar(stat="identity", fill="blue") +
+  coord_flip() +
+  labs(title="Top 10 Max Prices by Make", x="Make", y="Max Selling Price") +
+geom_smooth()
+
+
+```
+
+```{r}
+# Distribution by Car Brands
+ggplot(car_data, aes(x = make)) +
+  geom_bar(fill = 'blue') +
+  labs(title = 'Count by Car Brands', x = 'Brand', y = 'Count')+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+transmission_counts <- car_data %>% count(transmission)
+ggplot(transmission_counts, aes(x = "", y = n, fill = transmission)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y") +
+  labs(title = "Pie Chart of Transmission Types")
+```
+
+```{r}
+transmission_data <- car_data %>%
+  group_by(year, transmission) %>%
+  summarise(value = sum(sellingprice, na.rm = TRUE))
+
+ggplot(transmission_data, aes(x = year, y = value, color = transmission)) +
+  geom_line(size = 1)
+  
+```
+
+```{r}
+ggplot(car_data, aes(x = condition, y = sellingprice)) +
+  geom_point(color = "purple", size = 2, alpha = 0.6) +  
+  labs(title = "Selling Price vs. Condition", x = "Condition", y = "Selling Price") 
+```
+
+```{r}
+# Preparing of correlation plots
+
+#selecting only numaric variables
+
+df <- dplyr::select_if(car_data, is.numeric)
+df
+
+```
+
+```{r}
+#Using only available variables
+r <- cor(df, use="complete.obs") 
+round(r,2)
+```
+
+```{r}
+#install.packages("ggcorrplot")
+install.packages("ggcorrplot", repos = "https://cran.r-project.org")
+library(ggcorrplot)
+
+ggcorrplot(r,hc.order = TRUE,
+type = "lower", lab = TRUE)
+
+```
+
+```{r}
+# Linear Regression Model 1: Predict Selling Price based on MMR
+model1 <- lm(sellingprice ~ mmr, data = car_data)
+summary(model1)
+
+# Linear Regression Model 2: Predict Selling Price based on Odometer and Year
+model2 <- lm(sellingprice ~ odometer + year, data = car_data)
+summary(model2)
+
+# Linear Regression Model 3: Predict Selling Price based on Interior color
+model3 <- lm(sellingprice ~ interior, data= car_data)
+summary(model3)
+
+```
+
+```{r}
+# One-Way ANOVA: Does 'year' affect 'sellingprice'?
+anova_result <- aov(sellingprice ~ as.factor(year), data = car_data)
+summary(anova_result)
+```
+
+```{r}
+# Two-Way ANOVA: Does 'year' and 'condition' affect 'sellingprice'?
+anova_result <- aov(sellingprice ~ year + condition, data = car_data)
+summary(anova_result)
+```
+
+```{r}
+# Two-Way ANOVA with interaction: Does the interaction between 'year' and 'condition' affect 'sellingprice'?
+anova_result <- aov(sellingprice ~ year * condition, data = car_data)
+summary(anova_result)
+```
+
+```{r}
+# Two-Way ANOVA with interaction and blocking: Effect of 'year', 'condition', and 'state' on 'sellingprice'
+anova_result <- aov(sellingprice ~ year * condition * state, data = car_data)
+summary(anova_result)
+```
+```{r}
+# Count the most sold car models
+top_models <- car_data %>%
+  count(model) %>%
+  arrange(desc(n)) %>%
+  top_n(10, n)
+top_models
+```
+```{r}
+ggplot(top_models, aes(x = n, y = reorder(model, n))) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(title = "Top 10 Most Sold Car Models",
+       x = "Number of Cars Sold",
+       y = "Model") +
+  theme_minimal()
+```
+
+
+
+
